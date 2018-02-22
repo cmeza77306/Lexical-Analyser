@@ -1,0 +1,218 @@
+#include "stdafx.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+//special case implementations
+/*
+	1. (fahr <= num)
+	for this special case we could check if the word starts and ends with a seprerator (someting i think we would want for the parser in Proj 2)
+	after we checked this condtion we could output the first seperator as token and lexeme
+
+
+
+*/
+
+
+//Functions
+string get_source_string(string file_name);
+void skip_white_space(string source, int & iter);
+void skip_comments(string source, int & iter);
+string find_word_to_lex(string source, int & iter);
+void fake_lexer(string to_lex);
+
+//Arrays of keywords and operators
+const string keyword_list[13] = { "function", "int", "boolean", "real", "if", "endif", "else", "return", "put", "get", "while", "true", "false" };
+//I seperated the 
+const char operator_list[12] = { '=', '+',  '-', '*', '/', ':', '==', '^=', '>', '<', '=>', '=<'};
+const char seperator_list[9] = { ',', ';', '{', '}', '%%','(', ')', '[', ']' };
+
+const int colSize = 5;
+
+//my temp fsm will change when needed
+const int fsm[][colSize] ={			//row number
+	{ 1, 2,  3, NULL, NULL },		// 1
+	{ 2, 4, 5, 6, NULL },			// 2
+	{ 3, NULL, 3, NULL, 7 },		// 3
+	{ 4, 4, 5, 6, NULL },			// 4
+	{ 5, 4, 5, 6, NULL },			// 5
+	{ 6, NULL, NULL, NULL, NULL},	// 6
+	{ 7, NULL, 8, NULL, NULL },		// 7
+	{ 8, NULL, 8, NULL, NULL },		// 8
+};
+
+void main()
+{
+	//Reading in file
+	cout << "Enter name of source file to parse: ";
+	string file_name;
+	cin >> file_name;
+	cout << endl << endl;
+
+	//Getting all from source code from input file and puts it into one string
+	string source_string = get_source_string(file_name);
+	
+	//iterator that is used across parsing functions
+	//
+	int source_iter = 0;
+	while (source_iter <  source_string.length())
+	{
+		string word_to_lex;
+		word_to_lex = find_word_to_lex(source_string, source_iter);
+		skip_white_space(source_string, source_iter);
+		fake_lexer(word_to_lex);
+	}
+	skip_white_space(source_string, source_iter);
+}
+
+
+
+
+void fake_lexer(string to_lex)
+{
+	//maybe 
+
+	int iter = 0;
+
+	//Special case for Seperators at both ends of string if we solve this special case first it will be easier to solve other cases
+	if (isSeperator(to_lex[iter]) && isSeperator(to_lex[to_lex.length-1]))
+	{
+		//need to create struct token that holds two strings to do output
+		cout << "Seperator \t" << to_lex[iter] << endl;
+		iter++;
+		
+		//then checks to see if next char is digit or letter
+		if (isdigit(to_lex[iter]) || isalpha(to_lex[iter]))
+		{
+			int state = 1;
+			int stateArray[colSize];
+			for (iter; iter < to_lex.size(); iter++)
+			{
+				//need function that does the transition;
+				//Would be it okay to hard code this?
+				//Current transition function ideas
+				//Determine the current state
+				//from that state identify possible state transitions 
+				//continue until the word has been read fully.
+
+
+			}
+
+
+			//go to FSM
+		}
+		cout << "Seperator \t" << to_lex[to_lex[to_lex.length - 1]] << endl;
+
+	}
+	else if (isdigit(to_lex[iter]) || isalpha(to_lex[iter]))
+	{
+		int state = 1;
+		for (iter; iter < to_lex.size(); iter++)
+		{
+			//need function that does the transition;
+			//Would be it okay to hard code this?
+			//Current transition function ideas
+			//Determine the current state
+			//from that state identify possible state transitions 
+			//continue until the word has been read fully.
+
+
+		}
+
+	}
+	return;
+}
+//boolean function that checks to see if to_lex is an operator
+bool isOperator(char to_lex)
+{
+	bool check;
+	for (int i = 0; i < 12; i++)
+	{
+		if (to_lex == operator_list[i])
+		{
+			return true;
+
+		}
+
+	}
+	return false;
+
+}
+bool isSeperator(char to_lex)
+{
+	bool check;
+	for (int i = 0; i < 12; i++)
+	{
+		if (to_lex == seperator_list[i])
+		{
+			return true;
+
+		}
+
+	}
+	return false;
+
+}
+//Function that takes in an input filename and outputs all source code into one string
+string get_source_string(string file_name)
+{
+	ifstream source_file_reader;
+	source_file_reader.open(file_name);
+
+	if (!source_file_reader)
+	{
+		cerr << "Unable to open " + file_name;
+		exit(1);
+	}
+
+	string source_string;
+
+	//Carlos - not to sure what is occuring here im assuming this is just a way to get the entire source code into one string.
+	source_string.reserve(source_file_reader.tellg());
+	source_string.assign((istreambuf_iterator<char>(source_file_reader)), istreambuf_iterator<char>());
+	source_file_reader.close();
+	return source_string;
+
+}
+
+//Finds word to lex from source string
+//Uses skip comments and white space comments
+string find_word_to_lex(string source, int & iter)
+{
+	string word;
+	while (source[iter] != ' ' && source[iter] != '\n' &&
+		source[iter] != '\t' && iter < source.length())
+	{
+		if (source[iter] == '!')
+		{
+			skip_comments(source, iter);
+		}
+		skip_white_space(source, iter);
+		word += source[iter];
+		iter++;
+	}
+	return word;
+}
+
+//Function that skips white space takes in iter from main and find_word_to_lex
+void skip_white_space(string source, int & iter)
+{
+	while ((source[iter] == ' ' || source[iter] == '\n' ||
+		source[iter] == '\t') && iter <  source.length())
+	{
+		iter++;
+	}
+}
+
+//Function that skips comments takes in iter from main and find_word_to_lex
+void skip_comments(string source, int & iter)
+{
+	iter++;
+	while (source[iter] != '!')
+	{
+		iter++;
+	}
+	iter++;
+}
